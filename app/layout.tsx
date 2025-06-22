@@ -6,8 +6,6 @@ import { ThemeProvider } from "@/components/theme-provider";
 import { AppSidebar } from "@/components/sidebar";
 import ClientLayout from "./clientLayout";
 import { AuthProvider } from "@/lib/auth";
-import { Footer } from "@/components/footer";
-import { Header } from "@/components/header";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -33,13 +31,9 @@ export default function RootLayout({
         >
           <AuthProvider>
             <ClientLayout>
-              <div className="flex min-h-screen flex-col">
-                <Header />
-                <div className="flex flex-1">
-                  <AppSidebar />
-                  <main className="flex-1 overflow-auto p-6">{children}</main>
-                </div>
-                <Footer />
+              <div className="flex min-h-screen bg-gradient-to-br from-background via-background to-muted/20">
+                <AppSidebar />
+                <main className="flex-1 overflow-auto p-6">{children}</main>
               </div>
             </ClientLayout>
           </AuthProvider>
