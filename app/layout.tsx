@@ -2,17 +2,18 @@ import type React from "react";
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
-import { ThemeProvider } from "@/components/theme-provider";
-import { AppSidebar } from "@/components/sidebar";
-import ClientLayout from "./clientLayout";
-import { AuthProvider } from "@/lib/auth";
+import { AppProvider } from "@/lib/store";
+import { Toaster } from "@/components/ui/toaster";
 
-const inter = Inter({ subsets: ["latin"] });
+const inter = Inter({
+  subsets: ["latin"],
+  variable: "--font-inter",
+});
 
 export const metadata: Metadata = {
-  title: "EventPass - Event Management System",
+  title: "EventPass - AI-Powered Event Management",
   description:
-    "Create and manage events, generate passes, and handle check-ins",
+    "Create, manage, and optimize your events with AI-powered insights",
 };
 
 export default function RootLayout({
@@ -21,23 +22,12 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" suppressHydrationWarning>
-      <body className={inter.className}>
-        <ThemeProvider
-          attribute="class"
-          defaultTheme="system"
-          enableSystem
-          disableTransitionOnChange
-        >
-          <AuthProvider>
-            <ClientLayout>
-              <div className="flex min-h-screen bg-gradient-to-br from-background via-background to-muted/20">
-                <AppSidebar />
-                <main className="flex-1 overflow-auto p-6">{children}</main>
-              </div>
-            </ClientLayout>
-          </AuthProvider>
-        </ThemeProvider>
+    <html lang="en">
+      <body className={`${inter.variable} font-sans antialiased`}>
+        <AppProvider>
+          {children}
+          <Toaster />
+        </AppProvider>
       </body>
     </html>
   );

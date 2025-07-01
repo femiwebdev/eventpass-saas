@@ -1,72 +1,133 @@
-import { Button } from "@/components/ui/button"
-import { Card, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
-import Link from "next/link"
-import { ArrowRight, CalendarDays, CheckSquare, PlusCircle, Ticket } from "lucide-react"
+"use client"
 
-export default function Home() {
-  const features = [
-    {
-      icon: <PlusCircle className="h-8 w-8 text-primary" />,
-      title: "Create Events",
-      description: "Create and customize events with detailed information",
-      href: "/create-event",
-    },
-    {
-      icon: <Ticket className="h-8 w-8 text-primary" />,
-      title: "Generate Passes",
-      description: "Generate digital passes for your event attendees",
-      href: "/your-events",
-    },
-    {
-      icon: <CheckSquare className="h-8 w-8 text-primary" />,
-      title: "Check-in",
-      description: "Easily check in attendees at your events",
-      href: "/check-in",
-    },
-    {
-      icon: <CalendarDays className="h-8 w-8 text-primary" />,
-      title: "Manage Events",
-      description: "View and manage all your events in one place",
-      href: "/your-events",
-    },
-  ]
+import { AppSidebar } from "@/components/sidebar"
+import { SidebarInset, SidebarTrigger } from "@/components/ui/sidebar"
+import { EnhancedEventCard } from "@/components/enhanced-event-card"
+import { Button } from "@/components/ui/button"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Badge } from "@/components/ui/badge"
+import { useAppState } from "@/lib/store"
+import { 
+  Plus,
+  TrendingUp,
+  Users,
+  Calendar,
+  DollarSign,
+  Bell,
+  Search
+} from "lucide-react"
+import Link from "next/link"
+
+export default function Dashboard() {
+  const { state } = useAppState()
+  const { events, user } = state
+
+  const totalRevenue = events.reduce((sum, event) => sum + event.revenue, 0)
+  const totalAttendees = events.reduce((sum, event) => sum + event.attendees, 0)
+  const activeEvents = events.filter(event => event.status === 'live').length
+  const upcomingEvents = events.filter(event => event.status === 'upcoming').length
 
   return (
-    <div className="container mx-auto space-y-8 py-6">
-      <div className="text-center space-y-4">
-        <h1 className="text-4xl font-bold tracking-tight">Welcome to EventPass</h1>
-        <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
-          The all-in-one platform for creating, managing, and tracking your events
-        </p>
-      </div>
-
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mt-12">
-        {features.map((feature, index) => (
-          <Card key={index} className="transition-all hover:shadow-md">
-            <CardHeader>
-              <div className="mb-2">{feature.icon}</div>
-              <CardTitle>{feature.title}</CardTitle>
-              <CardDescription>{feature.description}</CardDescription>
-            </CardHeader>
-            <CardFooter>
-              <Button asChild className="w-full">
-                <Link href={feature.href}>
-                  Get Started <ArrowRight className="ml-2 h-4 w-4" />
-                </Link>
+    <>
+      <AppSidebar />
+      <SidebarInset>
+        <header className="flex h-16 shrink-0 items-center gap-2 border-b px-4">
+          <SidebarTrigger className="-ml-1" />
+          <div className="flex flex-1 items-center justify-between">
+            <div>
+              <h1 className="text-xl font-semibold">Welcome back, {user?.name}!</h1>
+              <p className="text-sm text-muted-foreground">Manage your events and track performance</p>
+            </div>
+            <div className="flex items-center gap-2">
+              <Button variant="outline" size="sm">
+                <Search className="h-4 w-4 mr-2" />
+                Search
               </Button>
-            </CardFooter>
-          </Card>
-        ))}
-      </div>
+              <Button variant="outline" size="sm">
+                <Bell className="h-4 w-4" />
+              </Button>
+              <Link href="/create-event">
+                <Button size="sm">
+                  <Plus className="h-4 w-4 mr-2" />
+                  Create Event
+                </Button>
+              </Link>
+            </div>
+          </div>
+        </header>
+        
+        <div className="flex flex-1 flex-col gap-4 p-4">
+          {/* Overview Stats */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            <Card>
+              <CardContent className="p-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium text-muted-foreground">Total Revenue</p>
+                    <p className="text-2xl font-bold">€{totalRevenue.toLocaleString()}</p>
+                  </div>
+                  <DollarSign className="h-8 w-8 text-muted-foreground" />
+                </div>
+              </CardContent>
+            </Card>
 
-      <div className="mt-16 text-center">
-        <h2 className="text-2xl font-bold mb-4">Recent Events</h2>
-        <div className="flex justify-center">
-          <Button asChild variant="outline">
-            <Link href="/your-events">View All Events</Link>
-          </Button>
+            <Card>
+              <CardContent className="p-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium text-muted-foreground">Total Attendees</p>
+                    <p className="text-2xl font-bold">{totalAttendees.toLocaleString()}</p>
+                  </div>
+                  <Users className="h-8 w-8 text-muted-foreground" />
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardContent className="p-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium text-muted-foreground">Active Events</p>
+                    <p className="text-2xl font-bold">{activeEvents}</p>
+                  </div>
+                  <Calendar className="h-8 w-8 text-muted-foreground" />
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardContent className="p-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium text-muted-foreground">Upcoming</p>
+                    <p className="text-2xl font-bold">{upcomingEvents}</p>
+                  </div>
+                  <TrendingUp className="h-8 w-8 text-muted-foreground" />
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Recent Events */}
+          <Card>
+            <CardHeader>
+              <div className="flex items-center justify-between">
+                <CardTitle>Your Events</CardTitle>
+                <Link href="/your-events">
+                  <Button variant="outline" size="sm">View All</Button>
+                </Link>
+              </div>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {events.slice(0, 3).map((event) => (
+                  <EnhancedEventCard key={event.id} event={event} />
+                ))}
+              </div>
+            </CardContent>
+          </Card>
         </div>
-      </div>
-    </div>
+      </SidebarInset>
+    </>
   )
 }

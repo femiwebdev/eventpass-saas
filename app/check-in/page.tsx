@@ -1,138 +1,268 @@
 "use client"
 
 import { useState } from "react"
+import { AppSidebar } from "@/components/sidebar"
+import { SidebarInset, SidebarTrigger } from "@/components/ui/sidebar"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Camera, CheckCircle, AlertTriangle, XCircle } from "lucide-react"
-import { motion } from "framer-motion"
+import { Badge } from "@/components/ui/badge"
+import { useToast } from "@/components/ui/use-toast"
+import { useAppState, appActions } from "@/lib/store"
+import { 
+  QrCode, 
+  UserCheck, 
+  Users, 
+  Search,
+  CheckCircle,
+  Clock,
+  Scan
+} from "lucide-react"
 
-type ValidationStatus = "none" | "valid" | "used" | "invalid"
+export default function CheckIn() {
+  const [qrCode, setQrCode] = useState("")
+  const [manualCode, setManualCode] = useState("")
+  const [isScanning, setIsScanning] = useState(false)
+  const { state, dispatch } = useAppState()
+  const { events, checkedInAttendees } = state
+  const { toast } = useToast()
 
-export default function EventCheckInPage() {
-  const [passLink, setPassLink] = useState("")
-  const [validationStatus, setValidationStatus] = useState<ValidationStatus>("none")
-  const [seatNumber, setSeatNumber] = useState("A12")
+  const handleQRScan = async () => {
+    if (!qrCode.trim()) return
 
-  const handleValidate = () => {
-    // Simulate validation logic
-    if (!passLink) {
-      setValidationStatus("invalid")
-      return
+    setIsScanning(true)
+    
+    // Simulate QR scan processing
+    await new Promise(resolve => setTimeout(resolve, 1500))
+    
+    const attendeeData = {
+      id: Date.now().toString(),
+      name: `Attendee ${Math.floor(Math.random() * 1000)}`,
+      passCode: qrCode,
+      eventId: events[0]?.id || '1'
     }
-
-    // For demo purposes, we'll cycle through different statuses
-    if (passLink.includes("valid")) {
-      setValidationStatus("valid")
-      setSeatNumber("A12")
-    } else if (passLink.includes("used")) {
-      setValidationStatus("used")
-    } else {
-      setValidationStatus("invalid")
-    }
+    
+    dispatch(appActions.checkInAttendee(attendeeData))
+    
+    toast({
+      title: "Check-in Successful! ✅",
+      description: `${attendeeData.name} has been checked in`
+    })
+    
+    setQrCode("")
+    setIsScanning(false)
   }
 
+  const handleManualCheckIn = async () => {
+    if (!manualCode.trim()) return
+
+    const attendeeData = {
+      id: Date.now().toString(),
+      name: `Manual Check-in ${Math.floor(Math.random() * 1000)}`,
+      passCode: manualCode,
+      eventId: events[0]?.id || '1'
+    }
+    
+    dispatch(appActions.checkInAttendee(attendeeData))
+    
+    toast({
+      title: "Manual Check-in Successful! ✅",
+      description: `${attendeeData.name} has been checked in manually`
+    })
+    
+    setManualCode("")
+  }
+
+  const recentCheckIns = checkedInAttendees.slice(-5).reverse()
+
   return (
-    <div className="min-h-screen bg-white dark:bg-gray-950">
-      <main className="container mx-auto py-10 px-4 max-w-md">
-        <motion.h1
-          className="text-3xl font-bold mb-8 text-center"
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5 }}
-        >
-          Event Check-in
-        </motion.h1>
-
-        <motion.div
-          className="space-y-8"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.2, duration: 0.5 }}
-        >
-          {/* QR Code Scanning Area */}
-          <div className="flex flex-col items-center">
-            <div className="border-dashed border-2 border-gray-300 dark:border-gray-700 rounded-lg p-10 w-full max-w-sm aspect-square flex flex-col items-center justify-center cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-900 transition-colors">
-              <Camera className="h-16 w-16 text-gray-400 mb-4" />
-              <p className="text-lg font-medium text-gray-600 dark:text-gray-400">Scan QR Code</p>
+    <>
+      <AppSidebar />
+      <SidebarInset>
+        <header className="flex h-16 shrink-0 items-center gap-2 border-b px-4">
+          <SidebarTrigger className="-ml-1" />
+          <div className="flex flex-1 items-center justify-between">
+            <div>
+              <h1 className="text-xl font-semibold">Event Check-in</h1>
+              <p className="text-sm text-muted-foreground">Scan QR codes or manually check in attendees</p>
+            </div>
+            <div className="flex items-center gap-2">
+              <Badge variant="secondary">
+                <Users className="h-3 w-3 mr-1" />
+                {checkedInAttendees.length} Checked In
+              </Badge>
             </div>
           </div>
-
-          {/* Manual Entry */}
-          <div className="space-y-3">
-            <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Or enter pass link:</p>
-            <div className="flex space-x-2">
-              <Input
-                value={passLink}
-                onChange={(e) => setPassLink(e.target.value)}
-                placeholder="https://event.example.com/pass/..."
-                className="flex-1"
-              />
-              <Button onClick={handleValidate}>Validate</Button>
-            </div>
-          </div>
-
-          {/* Validation Status */}
-          {validationStatus !== "none" && (
-            <motion.div
-              className="rounded-lg p-6 border"
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.3 }}
-              style={{
-                borderColor:
-                  validationStatus === "valid"
-                    ? "rgb(34, 197, 94)"
-                    : validationStatus === "used"
-                      ? "rgb(234, 179, 8)"
-                      : "rgb(239, 68, 68)",
-                backgroundColor:
-                  validationStatus === "valid"
-                    ? "rgba(34, 197, 94, 0.1)"
-                    : validationStatus === "used"
-                      ? "rgba(234, 179, 8, 0.1)"
-                      : "rgba(239, 68, 68, 0.1)",
-              }}
-            >
-              <div className="flex items-start space-x-3">
-                {validationStatus === "valid" && (
-                  <CheckCircle className="h-6 w-6 text-green-500 flex-shrink-0 mt-0.5" />
-                )}
-                {validationStatus === "used" && (
-                  <AlertTriangle className="h-6 w-6 text-yellow-500 flex-shrink-0 mt-0.5" />
-                )}
-                {validationStatus === "invalid" && <XCircle className="h-6 w-6 text-red-500 flex-shrink-0 mt-0.5" />}
-
-                <div>
-                  {validationStatus === "valid" && (
-                    <>
-                      <h3 className="font-bold text-green-600 dark:text-green-500 text-lg">
-                        Valid Pass - Entry Allowed
-                      </h3>
-                      <p className="text-green-600 dark:text-green-500 mt-1">Seat/Table: {seatNumber}</p>
-                    </>
-                  )}
-                  {validationStatus === "used" && (
-                    <h3 className="font-bold text-yellow-600 dark:text-yellow-500 text-lg">Pass Already Used</h3>
-                  )}
-                  {validationStatus === "invalid" && (
-                    <h3 className="font-bold text-red-600 dark:text-red-500 text-lg">Invalid Pass</h3>
-                  )}
+        </header>
+        
+        <div className="flex flex-1 flex-col gap-6 p-6">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {/* QR Code Scanner */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <QrCode className="h-5 w-5" />
+                  QR Code Scanner
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="border-2 border-dashed border-primary/20 rounded-lg p-8 text-center bg-primary/5">
+                  <QrCode className="h-16 w-16 text-primary mx-auto mb-4" />
+                  <p className="text-sm text-muted-foreground mb-4">
+                    Point your camera at the QR code or enter code manually
+                  </p>
+                  <Button className="mb-4" variant="outline">
+                    <Scan className="h-4 w-4 mr-2" />
+                    Start Camera Scan
+                  </Button>
                 </div>
-              </div>
-            </motion.div>
-          )}
 
-          {/* Instructions */}
-          <div className="text-sm text-gray-500 dark:text-gray-400 mt-8 p-4 bg-gray-50 dark:bg-gray-900 rounded-lg">
-            <p className="mb-2 font-medium">Testing Instructions:</p>
-            <ul className="list-disc pl-5 space-y-1">
-              <li>Enter "valid" in the link to see a valid pass</li>
-              <li>Enter "used" to see an already used pass</li>
-              <li>Enter anything else to see an invalid pass</li>
-            </ul>
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Or enter QR code manually:</label>
+                  <div className="flex gap-2">
+                    <Input
+                      placeholder="Enter QR code or pass ID"
+                      value={qrCode}
+                      onChange={(e) => setQrCode(e.target.value)}
+                      onKeyPress={(e) => e.key === 'Enter' && handleQRScan()}
+                    />
+                    <Button 
+                      onClick={handleQRScan} 
+                      disabled={!qrCode.trim() || isScanning}
+                    >
+                      {isScanning ? (
+                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white" />
+                      ) : (
+                        <UserCheck className="h-4 w-4" />
+                      )}
+                    </Button>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Manual Check-in */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <UserCheck className="h-5 w-5" />
+                  Manual Check-in
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="space-y-4">
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium">Attendee Pass Code:</label>
+                    <Input
+                      placeholder="Enter attendee pass code"
+                      value={manualCode}
+                      onChange={(e) => setManualCode(e.target.value)}
+                      onKeyPress={(e) => e.key === 'Enter' && handleManualCheckIn()}
+                    />
+                  </div>
+
+                  <Button 
+                    onClick={handleManualCheckIn}
+                    disabled={!manualCode.trim()}
+                    className="w-full"
+                  >
+                    <UserCheck className="h-4 w-4 mr-2" />
+                    Check In Manually
+                  </Button>
+                </div>
+
+                <div className="pt-4 border-t">
+                  <p className="text-sm text-muted-foreground mb-2">Quick Actions:</p>
+                  <div className="grid grid-cols-2 gap-2">
+                    <Button variant="outline" size="sm">
+                      <Search className="h-4 w-4 mr-2" />
+                      Find Attendee
+                    </Button>
+                    <Button variant="outline" size="sm">
+                      <Users className="h-4 w-4 mr-2" />
+                      View All
+                    </Button>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
           </div>
-        </motion.div>
-      </main>
-    </div>
+
+          {/* Recent Check-ins */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Clock className="h-5 w-5" />
+                Recent Check-ins
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              {recentCheckIns.length === 0 ? (
+                <div className="text-center py-8">
+                  <UserCheck className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                  <p className="text-muted-foreground">No check-ins yet</p>
+                  <p className="text-sm text-muted-foreground">Start scanning QR codes to see attendees here</p>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {recentCheckIns.map((attendee) => (
+                    <div key={attendee.id} className="flex items-center justify-between p-3 bg-green-50 rounded-lg border border-green-200">
+                      <div className="flex items-center gap-3">
+                        <CheckCircle className="h-5 w-5 text-green-600" />
+                        <div>
+                          <p className="font-medium">{attendee.name}</p>
+                          <p className="text-sm text-muted-foreground">Pass: {attendee.passCode}</p>
+                        </div>
+                      </div>
+                      <div className="text-right">
+                        <p className="text-sm text-green-600 font-medium">Checked In</p>
+                        <p className="text-xs text-muted-foreground">
+                          {new Date(attendee.checkedInAt).toLocaleTimeString()}
+                        </p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* Statistics */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <Card>
+              <CardContent className="p-6 text-center">
+                <Users className="h-8 w-8 text-blue-600 mx-auto mb-2" />
+                <p className="text-2xl font-bold">{checkedInAttendees.length}</p>
+                <p className="text-sm text-muted-foreground">Total Check-ins</p>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardContent className="p-6 text-center">
+                <Clock className="h-8 w-8 text-green-600 mx-auto mb-2" />
+                <p className="text-2xl font-bold">
+                  {checkedInAttendees.filter(a => {
+                    const checkInTime = new Date(a.checkedInAt)
+                    const now = new Date()
+                    return (now.getTime() - checkInTime.getTime()) < 3600000 // Last hour
+                  }).length}
+                </p>
+                <p className="text-sm text-muted-foreground">Last Hour</p>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardContent className="p-6 text-center">
+                <CheckCircle className="h-8 w-8 text-purple-600 mx-auto mb-2" />
+                <p className="text-2xl font-bold">
+                  {events[0] ? Math.round((checkedInAttendees.length / events[0].attendees) * 100) : 0}%
+                </p>
+                <p className="text-sm text-muted-foreground">Check-in Rate</p>
+              </CardContent>
+            </Card>
+          </div>
+        </div>
+      </SidebarInset>
+    </>
   )
 }
